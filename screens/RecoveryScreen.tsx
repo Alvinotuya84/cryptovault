@@ -1,85 +1,79 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, StyleSheet, Button } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
 import bip39 from "bip39";
 import "react-native-get-random-values";
 
 import "@ethersproject/shims";
 
 import { ethers, Wallet } from "ethers";
+import { mainStyles, recoveryScreenStyles } from "../Styles";
+import * as SecureStore from "expo-secure-store";
 
 const RecoverySeedScreen = ({ navigation }: any) => {
-  const [seedInput, setSeedInput] = useState("");
+  const [seedInput, setSeedInput] = useState(
+    "logic custom shuffle horn ocean material enhance blush pride mango diet inmate"
+  );
   const [errorMessage, setErrorMessage] = useState("");
   const [privateKey, setPrivateKey] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSeedInput = (text: string) => {
     setSeedInput(text);
   };
 
   const handleSubmit = () => {
-    console.log(privateKey);
-
-    // handleGeneratePrivateKey();
-
-    navigation.navigate("BalanceScreen", {
-      privateKey:
-        "0x35f5510b7caa9456125f6d734d506957d077f0cd9f398095cad218054269810b",
-    });
-
-    // setErrorMessage(
-    //   "Invalid seed. Please enter a valid twelve-word recovery seed."
-    // );
+    setIsLoading(true);
+    try {
+      handleGeneratePrivateKey();
+      setErrorMessage("");
+    } catch (error) {
+      console.log(error);
+      setErrorMessage(
+        "Invalid seed. Please enter a valid twelve-word recovery seed."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleGeneratePrivateKey = () => {
-    const wallet = Wallet.fromMnemonic(
-      "logic custom shuffle horn ocean material enhance blush pride mango diet inmate"
-    );
-    setPrivateKey(wallet.privateKey);
+  const handleGeneratePrivateKey = async () => {
+    const wallet = Wallet.fromMnemonic(seedInput);
+    await SecureStore.setItemAsync("privateKey", wallet.privateKey);
+
+    navigation.navigate("BalanceScreen");
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Enter your recovery seed:</Text>
+    <View style={recoveryScreenStyles.container}>
+      <Text style={recoveryScreenStyles.header}>Enter your recovery seed:</Text>
       <TextInput
-        style={styles.input}
+        style={recoveryScreenStyles.input}
         onChangeText={handleSeedInput}
         value={seedInput}
         multiline={true}
         placeholder="Twelve-word recovery seed"
       />
       {errorMessage ? (
-        <Text style={styles.errorMessage}>{errorMessage}</Text>
+        <Text style={recoveryScreenStyles.errorMessage}>{errorMessage}</Text>
       ) : null}
-      <Button title="Submit" onPress={handleSubmit} />
+      {isLoading ? <Text>Loading...</Text> : null}
+
+      {isLoading ? (
+        <ActivityIndicator size={"small"} />
+      ) : (
+        <TouchableOpacity onPress={handleSubmit} style={mainStyles.mainButton}>
+          <Text style={mainStyles.mainButtonText}>Recover</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
-  },
-  header: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-  input: {
-    height: 100,
-    borderColor: "gray",
-    borderWidth: 1,
-    padding: 10,
-    marginBottom: 20,
-    textAlignVertical: "top",
-  },
-  errorMessage: {
-    color: "red",
-    marginBottom: 10,
-  },
-});
 
 export default RecoverySeedScreen;

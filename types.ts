@@ -1,4 +1,6 @@
 export interface Screen{
     name:string;
-    component:({ navigation ,route}: { navigation?: any,route?:any; }) => JSX.Element
+    component:({ navigation ,route}: { navigation?: any,route?:any; }) => JSX.Element,
+    title:string;
+    iconName:string;
 }
